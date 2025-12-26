@@ -215,15 +215,19 @@ button:hover{background:#42a5f5}
       </div>
     </div>
 
-    <div class="field" style="margin-top:10px;align-items:center;justify-content:flex-start">
+    <!-- Bagian jumlah partikel di-hide -->
+    <div class="field" style="margin-top:10px;align-items:center;justify-content:flex-start; display:none;">
       <label style="min-width:120px">Jumlah partikel:</label>
       <input id="particleCountInput" type="number" min="0" max="200" step="1" />
       <span style="opacity:0.85;font-size:13px;margin-left:6px"> (standar: 50)</span>
     </div>
+  </div>
+</div>
 
-    <div class="field" style="margin-top:8px">
-      <label><input type="checkbox" id="experimentToggle"> Mode eksperimen (ijinkan >50)</label>
-    </div>
+<div class="field" style="margin-top:8px; display:none;">
+  <label><input type="checkbox" id="experimentToggle"> Mode eksperimen (ijinkan >50)</label>
+</div>
+
 
     <p style="margin-top:10px;font-size:13px;opacity:0.85"></p>
   </div>
