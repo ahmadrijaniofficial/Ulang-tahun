@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AHMAD RIJANI</title>
+<style>
+html,body{height:100%;margin:0}
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#4facfe,#00f2fe);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  overflow:hidden;
+  color:#fff;
+}
+
+/* overlay kunci / notifikasi */
+#overlay {
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.72);
+  z-index:999;
+  flex-direction:column;
+  gap:14px;
+  padding:20px;
+  text-align:center;
+}
+#overlay .box{
+  background:rgba(255,255,255,0.04);
+  padding:18px;
+  border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.45);
+  min-width:320px;
+}
+#overlay h2{margin:6px 0 8px 0;font-size:1.2rem}
+#overlay p{margin:6px 0;font-size:0.98rem}
+
+/* flipbook container */
+.book-3d-container {
+  width:90%;
+  max-width:820px;
+  height:80%;
+  perspective:2000px;
+  position:relative;
+  z-index:1;
+}
+.book-3d {
+  width:100%;
+  height:100%;
+  position:relative;
+  transform-style: preserve-3d;
+  transition: transform 1s;
+}
+.page {
+  width:100%;
+  height:100%;
+  position:absolute;
+  top:0; left:0;
+  background:rgba(255,255,255,0.12);
+  border-radius:12px;
+  backdrop-filter:blur(8px);
+  box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:20px;
+  transform-origin:left center;
+  transition: transform 1s ease, z-index 0s;
+}
+.page img{
+  width:140px;height:140px;border-radius:50%;object-fit:cover;margin-bottom:12px;border:3px solid #fff;
+}
+h1,h2,p{margin:6px 0;color:#fff;text-shadow:1px 1px 2px #000}
+button{
+  margin:8px;padding:10px 16px;border-radius:50px;border:none;background:#2196f3;color:#fff;font-weight:700;cursor:pointer;
+}
+button:hover{background:#42a5f5}
+.countdown{font-size:1.05rem;margin:8px 0;font-weight:700}
+.small{font-size:0.9rem;opacity:0.9}
+
+/* efek hujan */
+.balon-piece, .kado-piece, .cake-piece{
+  position:absolute;
+  opacity:0.95;
+  top:-60px;
+  animation:fall linear infinite;
+}
+.balon-piece{border-radius:50%}
+.kado-piece{transform:rotate(45deg);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+.cake-piece{border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+@keyframes fall{0%{transform:translateY(0) rotate(0deg)}100%{transform:translateY(700px) rotate(360deg)}}
+
+/* iframe modal (private form) */
+#iframeModal {
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.6); z-index:2000; padding:20px;
+}
+#iframeModal .modalBox{ width:100%; max-width:900px; height:80%; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.5); position:relative;}
+#iframeModal iframe{ width:100%; height:100%; border:0; display:block; }
+
+/* music modal */
+#musicModal {
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.6); z-index:2000; padding:20px;
+}
+#musicModal .modalBox{ width:100%; max-width:520px; background:#111; color:#fff; border-radius:10px; padding:18px; box-shadow:0 10px 40px rgba(0,0,0,0.6); position:relative; text-align:center; }
+#musicModal .modalHeader{ position:absolute; right:8px; top:8px; z-index:10; }
+#musicModal .modalHeader button{ background:transparent; color:#fff; border:none; font-size:20px; cursor:pointer }
+#musicModal .controls{ margin-top:12px; display:flex; gap:10px; justify-content:center; align-items:center }
+#musicModal .music-tools{ margin-top:12px; display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; }
+
+/* mini player (persisten) */
+#miniPlayer {
+  position:fixed;
+  right:12px;
+  top:12px;
+  z-index:2500;
+  background:rgba(0,0,0,0.55);
+  padding:8px 10px;
+  border-radius:10px;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+#miniPlayer button{ padding:6px 10px; border-radius:8px; font-weight:700; background:#2196f3; border:none; color:#fff; cursor:pointer }
+#miniPlayer input[type="range"]{ width:160px }
+#miniPlayer .time{ font-size:12px; opacity:0.95; }
+
+/* creator text placed inside last page */
+.creatorFooter{ margin-top:14px; font-size:13px; color:#fff; opacity:0.95; }
+
+/* small notice shown if autoplay blocked */
+#autoplayNotice{
+  position:fixed; left:12px; bottom:12px; z-index:2600;
+  background:rgba(0,0,0,0.6); color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; display:none;
+}
+</style>
+</head>
+<body>
+
+<!-- Overlay kunci -->
+<div id="overlay">
+  <div class="box">
+    <h2 id="overlayTitle">Halaman Terkunci</h2>
+    <p id="cdText">Menunggu...</p>
+    <p id="periodNote" class="small" style="display:none"></p>
+  </div>
+</div>
+
+<!-- container flipbook -->
+<div class="book-3d-container" id="bookWrap" style="display:none">
+  <div class="book-3d" id="book3D"></div>
+</div>
+
+<!-- iframe modal (private form) -->
+<div id="iframeModal" aria-hidden="true">
+  <div class="modalBox">
+    <div style="position:absolute;right:8px;top:8px;z-index:10">
+      <button id="closeModal" aria-label="Tutup">×</button>
+    </div>
+    <iframe id="privateIframe" src="" title="Sampaikan kata-kata secara pribadi" allowfullscreen></iframe>
+  </div>
+</div>
+
+<!-- music modal -->
+<div id="musicModal" aria-hidden="true">
+  <div class="modalBox">
+    <div class="modalHeader">
+      <button id="closeMusicModal" aria-label="Tutup">×</button>
+    </div>
+    <div style="padding-top:8px">
+      <div style="font-weight:700;font-size:18px">Kontrol Musik</div>
+      <div class="controls">
+        <button id="playBtn">Putar</button>
+        <button id="pauseBtn">Jeda</button>
+        <button id="stopBtn">Stop</button>
+      </div>
+
+      <!-- Musik tools: ganti file & kembalikan -->
+      <div class="music-tools">
+        <label style="font-size:13px;">Ganti Musik:</label>
+        <input id="fileMusic" type="file" accept="audio/*" />
+        <button id="restoreBtn" title="Kembalikan ke musik awal">Kembalikan Musik Awal</button>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label style="font-size:12px;display:block;margin-bottom:6px">Volume</label>
+        <input id="modalVolume" type="range" min="0" max="1" step="0.01" value="1" style="width:100%">
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- mini player (persisten) -->
+<div id="miniPlayer">
+  <button id="miniPlay">▶</button>
+  <input id="progress" type="range" min="0" max="100" value="0">
+  <div class="time" id="timeLabel">00:00 / 00:00</div>
+  <input id="miniVol" type="range" min="0" max="1" step="0.01" value="1" title="Volume" style="width:80px">
+</div>
+
+<!-- small autoplay blocked notice -->
+<div id="autoplayNotice">Autoplay diblokir oleh browser — tekan ▶ untuk memutar.</div>
+
+<!-- audio element (file 1.mp3 harus ada di folder yang sama) -->
+<audio id="musicAudio" src="1.mp3" preload="auto"></audio>
+
+<script>
+/* ========== KONFIGURASI ========== */
+const ulangTahun = {
+  nama: "AHMAD RIJANI",
+  lahir: "2009-01-17",
+  foto: "https://i.pinimg.com/736x/34/e4/e7/34e4e751e0dfbb4e3e222e33634d8cab.jpg",
+  pesan: "Selamat Ulang Tahun. Semoga panjang umur dan bahagia"
+};
+const SHORTCUT_SEQ = "1234567890";
+const PRIVATE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdvwI4dGvMJkSZgpJaYSdD1M5_M-g-yyUHR3u8aIFSp0vihLw/viewform?embedded=true";
+/* window length in ms: 7 days */
+const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+/* ================================== */
+
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const cdText = document.getElementById('cdText');
+const periodNote = document.getElementById('periodNote');
+const bookWrap = document.getElementById('bookWrap');
+
+const iframeModal = document.getElementById('iframeModal');
+const privateIframe = document.getElementById('privateIframe');
+const closeModal = document.getElementById('closeModal');
+
+const musicModal = document.getElementById('musicModal');
+const closeMusicModal = document.getElementById('closeMusicModal');
+const playBtn = document.getElementById('playBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const stopBtn = document.getElementById('stopBtn');
+const modalVolume = document.getElementById('modalVolume');
+
+const fileMusic = document.getElementById('fileMusic');
+const restoreBtn = document.getElementById('restoreBtn');
+
+const miniPlayer = document.getElementById('miniPlayer');
+const miniPlay = document.getElementById('miniPlay');
+const progress = document.getElementById('progress');
+const timeLabel = document.getElementById('timeLabel');
+const miniVol = document.getElementById('miniVol');
+
+const musicAudio = document.getElementById('musicAudio');
+const autoplayNotice = document.getElementById('autoplayNotice');
+
+let unlocked = false;
+let keyBuffer = "";
+
+/* for managing object URLs when user loads local file */
+let currentObjectURL = null;
+const defaultMusicSrc = '1.mp3';
+
+/* utilities */
+function hitungUsia(lahir){
+  const today=new Date();
+  const birth=new Date(lahir);
+  let age=today.getFullYear()-birth.getFullYear();
+  const m=today.getMonth()-birth.getMonth();
+  if(m<0 || (m===0 && today.getDate()<birth.getDate())) age--;
+  return age;
+}
+function nextBirthdayStart(lahir){
+  // Bandingkan berdasarkan tanggal (midnight) saja untuk menghindari masalah jam
+  const today = new Date();
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // jam 00:00 hari ini
+  const b = new Date(lahir);
+  let next = new Date(today.getFullYear(), b.getMonth(), b.getDate());
+  next.setHours(0,0,0,0);
+  if(next.getTime() < todayMid.getTime()){
+    next.setFullYear(next.getFullYear() + 1);
+  }
+  return next;
+}
+function getEndWindow(lahir){
+  const start = nextBirthdayStart(lahir);
+  return new Date(start.getTime() + WINDOW_MS);
+}
+function getCooldownObj(targetDate){
+  const now=new Date();
+  const distance=targetDate - now;
+  const days=Math.floor(distance/(1000*60*60*24));
+  const hours=Math.floor((distance%(1000*60*60*24))/(1000*60*60));
+  const minutes=Math.floor((distance%(1000*60*60))/(1000*60));
+  const seconds=Math.floor((distance%(1000*60))/1000);
+  return {days,hours,minutes,seconds,ms:distance};
+}
+function isInOpenWindow(lahir){
+  const now=new Date();
+  const start = nextBirthdayStart(lahir);
+  const end = new Date(start.getTime() + WINDOW_MS);
+  return (now >= start && now < end);
+}
+
+/* init logic */
+(function init(){
+  // ensure musicAudio has default src
+  if(!musicAudio.src || musicAudio.src.indexOf(defaultMusicSrc) === -1) {
+    musicAudio.src = defaultMusicSrc;
+  }
+  musicAudio.loop = true;
+  // If currently in the open window, open ; else show overlay with cooldown until start
+  if(isInOpenWindow(ulangTahun.lahir)){
+    unlocked = true;
+    overlay.style.display = 'none';
+    openFlipbook();
+    return;
+  }
+  // if after window end (i.e., now >= endWindow) show message that period ended and show cooldown to next start
+  const start = nextBirthdayStart(ulangTahun.lahir);
+  const end = new Date(start.getTime() + WINDOW_MS);
+  const now = new Date();
+  if(now >= end){
+    overlayTitle.textContent = 'Periode terbuka telah berakhir';
+    const untilNext = nextBirthdayStart(ulangTahun.lahir); // this gives next year's start
+    const cd = getCooldownObj(untilNext);
+    cdText.textContent = `Periode yang dimaksud sudah berakhir pada ${end.toLocaleString()}. Situs terkunci kembali. Tunggu ${cd.days} hari ${cd.hours} jam ${cd.minutes} menit ${cd.seconds} detik sampai periode berikutnya.`;
+    periodNote.style.display = 'block';
+    periodNote.textContent = `Periode terbuka sebelumnya: ${start.toLocaleDateString()} — ${new Date(end.getTime()).toLocaleDateString()}`;
+    overlay.style.display = 'flex';
+    bookWrap.style.display = 'none';
+    // still allow shortcut to open (per aturan sebelumnya)
+  } else {
+    // normal locked before start
+    overlayTitle.textContent = 'Halaman Terkunci';
+    overlay.style.display = 'flex';
+    bookWrap.style.display = 'none';
+    updateCountdownToStart();
+    setInterval(updateCountdownToStart, 1000);
+  }
+})();
+
+/* Update countdown until start */
+function updateCountdownToStart(){
+  const start = nextBirthdayStart(ulangTahun.lahir);
+  const cd = getCooldownObj(start);
+  if(cd.ms <= 0){
+    // open immediately
+    unlocked = true;
+    overlay.style.display = 'none';
+    openFlipbook();
+    return;
+  }
+  cdText.textContent = `Tunggu ${cd.days} hari ${cd.hours} jam ${cd.minutes} menit ${cd.seconds} detik lagi`;
+}
+
+/* keyboard shortcut */
+window.addEventListener('keydown', (e) => {
+  const k = e.key;
+  if(!/^[0-9]$/.test(k)) return;
+  keyBuffer += k;
+  if(keyBuffer.length > SHORTCUT_SEQ.length) keyBuffer = keyBuffer.slice(-SHORTCUT_SEQ.length);
+  if(keyBuffer === SHORTCUT_SEQ){
+    unlocked = true;
+    overlay.style.display = 'none';
+    openFlipbook();
+    keyBuffer = "";
+  }
+});
+
+/* attempt autoplay - many browsers block audible autoplay; we try and show notice if blocked */
+async function attemptAutoplay(){
+  try {
+    await musicAudio.play();
+    // autoplay succeeded
+    showMiniPlayer();
+    miniPlay.textContent = '❚❚';
+    autoplayNotice.style.display = 'none';
+  } catch(err){
+    // autoplay blocked
+    showMiniPlayer();
+    miniPlay.textContent = '▶';
+    autoplayNotice.style.display = 'block';
+    // hide notice after a bit so it doesn't annoy too long
+    setTimeout(()=>{ autoplayNotice.style.display = 'none'; }, 8000);
+  }
+}
+
+/* open flipbook */
+function openFlipbook(){
+  bookWrap.style.display = 'block';
+  generatePages();
+  // try autoplay when flipbook opens
+  attemptAutoplay();
+}
+
+/* FLIPBOOK */
+let pages = [];
+let currentPage = 0;
+
+function createPage(title, text, foto, restart=false){
+  const page = document.createElement('div');
+  page.className = 'page';
+  page.innerHTML = `<h2>${title}</h2><p style="white-space:pre-line">${text}</p>`;
+  if(foto){
+    const img = document.createElement('img');
+    img.src = foto;
+    img.alt = 'Foto';
+    img.onerror = function(){ this.src = 'https://via.placeholder.com/140?text=Foto'; }
+    page.insertBefore(img, page.firstChild);
+  }
+
+  if(restart){
+    const btn = document.createElement('button');
+    btn.id = 'restartBtn';
+    btn.innerText = 'Ulangi';
+    btn.onclick = () => { pages.forEach(p=>p.style.transform='rotateY(-180deg)'); setTimeout(()=>showPage(0),800); btn.classList.add('flip'); setTimeout(()=>btn.classList.remove('flip'),800); };
+    page.appendChild(btn);
+  } else {
+    // HALAMAN PERTAMA: tombol buka music modal
+    const btnPlayOpen = document.createElement('button');
+    btnPlayOpen.innerText = 'Nyalakan Musik';
+    btnPlayOpen.onclick = openMusicModal;
+    page.appendChild(btnPlayOpen);
+
+    const btnNext = document.createElement('button');
+    btnNext.className = 'nav-btn';
+    btnNext.innerText = 'Next';
+    btnNext.onclick = nextPage;
+    page.appendChild(btnNext);
+  }
+  return page;
+}
+
+function generatePages(){
+  const book = document.getElementById('book3D');
+  book.innerHTML = '';
+  const usia = hitungUsia(ulangTahun.lahir);
+
+  const slides = [
+    createPage("Ulang Tahun " + ulangTahun.nama, `${ulangTahun.pesan}\nUsia: ${usia} tahun`, ulangTahun.foto),
+    createPage("Tanggal Lahir", `Tanggal Lahir: ${(() => { const d=new Date(ulangTahun.lahir); return d.getDate() + '-' + (d.getMonth()+1) + '-' + d.getFullYear(); })()}\nUmur: ${usia} tahun`, ulangTahun.foto),
+    createPage("Countdown", "<div class='countdown' id='countdown'></div>", null, true)
+  ];
+  slides.forEach(s => book.appendChild(s));
+  pages = document.querySelectorAll('.page');
+
+  // Tambahkan tombol "Sampaikan kata-kata secara pribadi" di TAB AKHIR (halaman countdown)
+  const lastPage = pages[pages.length - 1];
+  if(lastPage){
+    const privateBtn = document.createElement('button');
+    privateBtn.innerText = 'Sampaikan kata-kata secara pribadi';
+    privateBtn.onclick = openPrivateModal;
+    lastPage.appendChild(privateBtn);
+
+    // Tambahkan teks pencipta di halaman terakhir saja
+    const creator = document.createElement('div');
+    creator.className = 'creatorFooter';
+    creator.innerText = 'Pencipta web AHMAD RIJANI (26/12/2025)';
+    lastPage.appendChild(creator);
+  }
+
+  showPage(0);
+  startCountdown();
+}
+
+function showPage(index){
+  pages.forEach((p,i) => { p.style.zIndex = 0; p.style.transform = 'rotateY(0deg)'; if(i < index) p.style.transform = 'rotateY(-180deg)'; if(i === index) p.style.zIndex = 10; });
+  currentPage = index;
+}
+function nextPage(){
+  if(currentPage < pages.length - 1){
+    pages[currentPage].style.transform = 'rotateY(-180deg)';
+    pages[currentPage].style.zIndex = 0;
+    currentPage++;
+    pages[currentPage].style.zIndex = 10;
+  }
+}
+function startCountdown(){
+  const countdown = document.getElementById('countdown');
+  if(!countdown) return;
+  const interval = setInterval(() => {
+    const start = nextBirthdayStart(ulangTahun.lahir);
+    const now = new Date();
+    const endWindow = new Date(start.getTime() + WINDOW_MS);
+    // If now has passed the window end, show overlay telling period ended and lock
+    if(now >= endWindow){
+      overlayTitle.textContent = 'Periode terbuka telah berakhir';
+      const cdNext = getCooldownObj(nextBirthdayStart(ulangTahun.lahir)); // next year's start
+      cdText.textContent = `Periode terbuka berakhir pada ${endWindow.toLocaleString()}. Situs terkunci kembali. Tunggu ${cdNext.days} hari ${cdNext.hours} jam ${cdNext.minutes} menit ${cdNext.seconds} detik sampai periode berikutnya.`;
+      overlay.style.display = 'flex';
+      bookWrap.style.display = 'none';
+      clearInterval(interval);
+      return;
+    }
+
+    const usia = hitungUsia(ulangTahun.lahir);
+    const distanceToStart = start.getTime() - now.getTime();
+    if(distanceToStart <= 0 && isInOpenWindow(ulangTahun.lahir)){
+      countdown.innerHTML = "Hari Ulang Tahun Telah Tiba";
+      showHujanBalonKado(usia);
+      // keep countdown showing until window end - but we can show time to window end if desired
+    } else {
+      // Show time until window start if before start; or time until window end if inside window
+      if(isInOpenWindow(ulangTahun.lahir)){
+        const end = new Date(nextBirthdayStart(ulangTahun.lahir).getTime() + WINDOW_MS);
+        const cd = getCooldownObj(end);
+        countdown.innerHTML = `Periode terbuka tersisa: ${cd.days} Hari ${cd.hours} Jam ${cd.minutes} Menit ${cd.seconds} Detik`;
+      } else {
+        const start2 = nextBirthdayStart(ulangTahun.lahir);
+        const cd = getCooldownObj(start2);
+        countdown.innerHTML = `${cd.days} Hari ${cd.hours} Jam ${cd.minutes} Menit ${cd.seconds} Detik`;
+      }
+    }
+  }, 1000);
+}
+function showHujanBalonKado(usia){
+  const jumlah = 90;
+  for(let i=0;i<jumlah;i++){
+    const div = document.createElement('div');
+    const r = Math.random();
+    if(r < 0.45){
+      div.className = 'balon-piece';
+      const size = 12 + Math.random()*22;
+      div.style.width = size + 'px';
+      div.style.height = size + 'px';
+      div.style.background = `hsl(${Math.random()*360},70%,60%)`;
+    } else if(r < 0.85){
+      div.className = 'kado-piece';
+      const size = 14 + Math.random()*18;
+      div.style.width = size + 'px';
+      div.style.height = size + 'px';
+      div.style.background = `hsl(${Math.random()*360},80%,50%)`;
+    } else {
+      div.className = 'cake-piece';
+      div.style.width = '60px';
+      div.style.height = '60px';
+      div.style.background = '#ff6666';
+      div.innerText = usia;
+    }
+    div.style.left = (Math.random()*92) + '%';
+    div.style.animationDuration = (3 + Math.random()*3) + 's';
+    div.style.top = (-20 - Math.random()*80) + 'px';
+    document.body.appendChild(div);
+    setTimeout(()=>div.remove(),8000);
+  }
+}
+
+/* ========== Modal iframe (private form) ========== */
+function openPrivateModal(){
+  privateIframe.src = PRIVATE_FORM_URL;
+  iframeModal.style.display = 'flex';
+  iframeModal.setAttribute('aria-hidden','false');
+}
+function closePrivateModal(){
+  privateIframe.src = '';
+  iframeModal.style.display = 'none';
+  iframeModal.setAttribute('aria-hidden','true');
+}
+closeModal.addEventListener('click', closePrivateModal);
+iframeModal.addEventListener('click', (e)=>{ 
+  if(e.target === iframeModal) closePrivateModal();
+});
+window.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && iframeModal.style.display === 'flex') closePrivateModal();
+});
+
+/* ========== Music modal controls & mini player ========== */
+
+/* open/close music modal */
+function openMusicModal(){
+  musicModal.style.display = 'flex';
+  musicModal.setAttribute('aria-hidden','false');
+}
+function closeMusicModalFn(){
+  musicModal.style.display = 'none';
+  musicModal.setAttribute('aria-hidden','true');
+  // do NOT stop audio when modal closed (per request)
+}
+closeMusicModal.addEventListener('click', () => { closeMusicModalFn(); });
+
+/* modal buttons */
+playBtn.addEventListener('click', ()=> {
+  musicAudio.play().catch(()=>{});
+  showMiniPlayer();
+  miniPlay.textContent = '❚❚';
+});
+pauseBtn.addEventListener('click', ()=> {
+  musicAudio.pause();
+  miniPlay.textContent = '▶';
+});
+stopBtn.addEventListener('click', ()=> {
+  musicAudio.pause();
+  musicAudio.currentTime = 0;
+  hideMiniPlayer();
+  miniPlay.textContent = '▶';
+});
+
+/* modal volume controls */
+modalVolume.addEventListener('input', (e)=> {
+  musicAudio.volume = parseFloat(e.target.value);
+  miniVol.value = musicAudio.volume;
+});
+
+/* file input: ganti musik lokal */
+fileMusic.addEventListener('change', async (e) => {
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  // revoke previous object url if any
+  if(currentObjectURL){
+    URL.revokeObjectURL(currentObjectURL);
+    currentObjectURL = null;
+  }
+  currentObjectURL = URL.createObjectURL(f);
+  musicAudio.src = currentObjectURL;
+  // attempt autoplay after setting file
+  try {
+    await musicAudio.play();
+    miniPlay.textContent = '❚❚';
+    showMiniPlayer();
+  } catch(_) {
+    showMiniPlayer();
+    miniPlay.textContent = '▶';
+    autoplayNotice.style.display = 'block';
+    setTimeout(()=>{ autoplayNotice.style.display = 'none'; }, 6000);
+  }
+});
+
+/* restore default music */
+restoreBtn.addEventListener('click', async () => {
+  // revoke current object url if used
+  if(currentObjectURL){
+    URL.revokeObjectURL(currentObjectURL);
+    currentObjectURL = null;
+  }
+  musicAudio.src = defaultMusicSrc;
+  musicAudio.currentTime = 0;
+  // attempt autoplay on restore
+  try {
+    await musicAudio.play();
+    miniPlay.textContent = '❚❚';
+    showMiniPlayer();
+  } catch(_) {
+    musicAudio.pause();
+    hideMiniPlayer();
+    miniPlay.textContent = '▶';
+    autoplayNotice.style.display = 'block';
+    setTimeout(()=>{ autoplayNotice.style.display = 'none'; }, 6000);
+  }
+  // clear file input so same file can be reselected later
+  fileMusic.value = '';
+});
+
+/* mini player interactions */
+function showMiniPlayer(){
+  miniPlayer.style.display = 'flex';
+  miniVol.value = musicAudio.volume;
+}
+function hideMiniPlayer(){
+  miniPlayer.style.display = 'none';
+}
+
+/* mini-play toggle */
+miniPlay.addEventListener('click', () => {
+  if(musicAudio.paused){
+    musicAudio.play().catch(()=>{});
+    miniPlay.textContent = '❚❚';
+  } else {
+    musicAudio.pause();
+    miniPlay.textContent = '▶';
+  }
+});
+
+/* progress / seeking */
+musicAudio.addEventListener('timeupdate', () => {
+  if(!isFinite(musicAudio.duration) || musicAudio.duration === 0) return;
+  const pct = (musicAudio.currentTime / musicAudio.duration) * 100;
+  progress.value = pct;
+  timeLabel.textContent = formatTime(musicAudio.currentTime) + ' / ' + formatTime(musicAudio.duration);
+});
+
+progress.addEventListener('input', (e) => {
+  if(!isFinite(musicAudio.duration) || musicAudio.duration === 0) return;
+  const pct = parseFloat(e.target.value);
+  musicAudio.currentTime = (pct / 100) * musicAudio.duration;
+});
+
+miniVol.addEventListener('input', (e) => {
+  musicAudio.volume = parseFloat(e.target.value);
+  modalVolume.value = musicAudio.volume;
+});
+
+/* helper time format */
+function formatTime(sec){
+  if(!isFinite(sec)) return '00:00';
+  const s = Math.floor(sec % 60);
+  const m = Math.floor((sec / 60) % 60);
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+/* End of script */
+</script>
+</body>
+</html>
