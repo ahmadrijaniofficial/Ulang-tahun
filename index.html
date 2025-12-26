@@ -20,6 +20,20 @@ body{
   color:#fff;
 }
 
+/* WARNING modal for particles (shown at start) */
+#particleWarning {
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.75); z-index:3000; padding:20px;
+}
+#particleWarning .box{
+  background:#0b1220; color:#fff; padding:18px; border-radius:10px; max-width:460px; width:100%;
+  box-shadow:0 12px 36px rgba(0,0,0,0.6); text-align:left;
+}
+#particleWarning h3{margin:0 0 8px 0}
+#particleWarning p{margin:0 0 12px 0; opacity:0.95}
+#particleWarning .actions{display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:12px}
+#particleWarning label{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+
 /* overlay kunci / notifikasi */
 #overlay {
   position:absolute;
@@ -90,17 +104,32 @@ button:hover{background:#42a5f5}
 .countdown{font-size:1.05rem;margin:8px 0;font-weight:700}
 .small{font-size:0.9rem;opacity:0.9}
 
-/* efek hujan */
+/* particle layer (separate from body) */
+#particleLayer{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:5;
+}
+
+/* particle pieces */
 .balon-piece, .kado-piece, .cake-piece{
   position:absolute;
   opacity:0.95;
-  top:-60px;
-  animation:fall linear infinite;
+  top:0;
+  transform-origin:center center;
+  animation:fall linear forwards;
 }
 .balon-piece{border-radius:50%}
 .kado-piece{transform:rotate(45deg);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
 .cake-piece{border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
-@keyframes fall{0%{transform:translateY(0) rotate(0deg)}100%{transform:translateY(700px) rotate(360deg)}}
+
+/* use transform translate3d for smoother GPU-accelerated animation */
+@keyframes fall{
+  from { transform: translate3d(0,-120px,0) rotate(0deg); opacity:1; }
+  to   { transform: translate3d(0,110vh,0) rotate(360deg); opacity:0.95; }
+}
 
 /* iframe modal (private form) */
 #iframeModal {
@@ -110,7 +139,6 @@ button:hover{background:#42a5f5}
 #iframeModal .modalBox{ width:100%; max-width:900px; height:80%; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.5); position:relative;}
 #iframeModal iframe{ width:100%; height:100%; border:0; display:block; }
 
-/* music modal */
 #musicModal {
   position:fixed; inset:0; display:none; align-items:center; justify-content:center;
   background:rgba(0,0,0,0.6); z-index:2000; padding:20px;
@@ -176,6 +204,20 @@ button:hover{background:#42a5f5}
 </head>
 <body>
 
+<!-- Particle warning modal shown at first load -->
+<div id="particleWarning" role="dialog" aria-modal="true" style="display:none">
+  <div class="box">
+    <h3>Perhatian — Efek Partikel</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <label><input type="checkbox" id="disableParticlesCheckbox"> Matikan partikel</label>
+      <div class="actions">
+        <button id="continueBtn">Lanjutkan</button>
+      </div>
+    </div>
+    <p style="margin-top:10px;font-size:13px;opacity:0.85">Batas partikel standar: <strong>50</strong></p>
+  </div>
+</div>
+
 <!-- Overlay kunci -->
 <div id="overlay" role="dialog" aria-modal="true">
   <div class="box">
@@ -184,6 +226,9 @@ button:hover{background:#42a5f5}
     <p id="periodNote" class="small" style="display:none"></p>
   </div>
 </div>
+
+<!-- particle layer -->
+<div id="particleLayer" aria-hidden="true"></div>
 
 <!-- container flipbook -->
 <div class="book-3d-container" id="bookWrap" style="display:none">
@@ -256,6 +301,11 @@ const SHORTCUT_SEQ = "1234567890";
 const PRIVATE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdvwI4dGvMJkSZgpJaYSdD1M5_M-g-yyUHR3u8aIFSp0vihLw/viewform?embedded=true";
 /* window length in ms: 7 days */
 const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+/* particle limits */
+const MAX_PARTICLES = 50;        // batas yang diminta
+const FORCED_PARTICLES = 90;     // jumlah saat di-trigger rahasia
+
 /* ================================== */
 
 const overlay = document.getElementById('overlay');
@@ -287,8 +337,14 @@ const miniVol = document.getElementById('miniVol');
 const musicAudio = document.getElementById('musicAudio');
 const autoplayNotice = document.getElementById('autoplayNotice');
 
+const particleLayer = document.getElementById('particleLayer');
+const particleWarning = document.getElementById('particleWarning');
+const disableParticlesCheckbox = document.getElementById('disableParticlesCheckbox');
+const continueBtn = document.getElementById('continueBtn');
+
 let unlocked = false;
 let keyBuffer = "";
+let particlesDisabled = false;
 
 /* for managing object URLs when user loads local file */
 let currentObjectURL = null;
@@ -342,8 +398,34 @@ function isInOpenWindow(lahir){
   return (now >= start && now < end);
 }
 
-/* init logic */
-(function init(){
+/* ---------- Particle preference persistence ---------- */
+function loadParticlePref(){
+  const val = localStorage.getItem('particlesDisabled');
+  particlesDisabled = (val === 'true');
+  // reflect checkbox if modal shown later
+  disableParticlesCheckbox.checked = particlesDisabled;
+}
+function saveParticlePref(){
+  localStorage.setItem('particlesDisabled', particlesDisabled ? 'true' : 'false');
+}
+
+/* ========== STARTUP: show particle warning first ========== */
+(function showStartWarning(){
+  loadParticlePref();
+  // set checkbox state
+  disableParticlesCheckbox.checked = particlesDisabled;
+  particleWarning.style.display = 'flex';
+  // when user continues, hide modal and start main init
+  continueBtn.addEventListener('click', () => {
+    particlesDisabled = disableParticlesCheckbox.checked;
+    saveParticlePref();
+    particleWarning.style.display = 'none';
+    startInit(); // proceed with original init logic
+  });
+})();
+
+/* ========== ORIGINAL INIT LOGIC (moved into startInit) ========== */
+function startInit(){
   // ensure musicAudio has default src
   if(!musicAudio.src || musicAudio.src.indexOf(defaultMusicSrc) === -1) {
     musicAudio.src = defaultMusicSrc;
@@ -356,15 +438,17 @@ function isInOpenWindow(lahir){
     if(!isTouchDevice()) return;
     // hanya saat masih terkunci
     if(unlocked) return;
-    // increment tap count (anggap klik di mana saja pada overlay)
     mobileTapCount++;
+    // jika user telah memilih mematikan partikel, kita tetap izinkan "force" muncul apabila tap cepat (sesuai permintaan)
     if(mobileTapCount >= MOBILE_TAP_REQUIRED){
       unlocked = true;
       overlay.style.display = 'none';
       openFlipbook();
       mobileTapCount = 0;
+      // trigger full particle effect (force)
+      const usia = hitungUsia(ulangTahun.lahir);
+      showHujanBalonKado(usia, { force: true });
     }
-    // jangan mencegah fungsi default — ini rahasia, jadi tidak ada feedback visual
   });
 
   // If currently in the open window, open ; else show overlay with countdown until start
@@ -394,7 +478,7 @@ function isInOpenWindow(lahir){
     updateCountdownToStart();
     setInterval(updateCountdownToStart, 1000);
   }
-})();
+}
 
 /* Update countdown until start */
 function updateCountdownToStart(){
@@ -421,6 +505,9 @@ window.addEventListener('keydown', (e) => {
     overlay.style.display = 'none';
     openFlipbook();
     keyBuffer = "";
+    // if particles disabled, still allow secret full particles on shortcut
+    const usia = hitungUsia(ulangTahun.lahir);
+    showHujanBalonKado(usia, { force: true });
   }
 });
 
@@ -478,7 +565,7 @@ function createPage(title, text, foto, restart=false){
 
     const btnNext = document.createElement('button');
     btnNext.className = 'nav-btn';
-    btnNext.innerText = 'Selanjutnya'; // <- perubahan: Next -> Selanjutnya
+    btnNext.innerText = 'Selanjutnya';
     btnNext.onclick = nextPage;
     page.appendChild(btnNext);
   }
@@ -587,16 +674,39 @@ function startCountdown(){
     }
   }, 1000);
 }
-function showHujanBalonKado(usia){
-  const jumlah = 90;
-  for(let i=0;i<jumlah;i++){
+
+/* ========== Particle generator (optimized, respects disabled & cap) ========== */
+/**
+ * showHujanBalonKado(usia, { force: false })
+ * - jika force === true: munculkan FORCED_PARTICLES meskipun user mematikan partikel
+ * - jika force === false: jika user mematikan partikel maka tidak memunculkan apa-apa
+ * - selalu gunakan DocumentFragment dan transform-based animation
+ */
+function showHujanBalonKado(usia, opts = { force: false }){
+  const force = opts.force === true;
+
+  // if user disabled particles and not forcing -> do nothing
+  if(particlesDisabled && !force) return;
+
+  // decide how many to spawn
+  const isTouch = isTouchDevice();
+  const baseCount = force ? FORCED_PARTICLES : (isTouch ? 35 : MAX_PARTICLES);
+  // ensure not greater than MAX_PARTICLES when not forced
+  const spawnCount = force ? FORCED_PARTICLES : Math.min(baseCount, MAX_PARTICLES);
+
+  const frag = document.createDocumentFragment();
+  const viewportW = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+
+  for(let i=0; i<spawnCount; i++){
     const div = document.createElement('div');
     const r = Math.random();
+
     if(r < 0.45){
       div.className = 'balon-piece';
       const size = 12 + Math.random()*22;
       div.style.width = size + 'px';
       div.style.height = size + 'px';
+      div.style.borderRadius = '50%';
       div.style.background = `hsl(${Math.random()*360},70%,60%)`;
     } else if(r < 0.85){
       div.className = 'kado-piece';
@@ -604,19 +714,49 @@ function showHujanBalonKado(usia){
       div.style.width = size + 'px';
       div.style.height = size + 'px';
       div.style.background = `hsl(${Math.random()*360},80%,50%)`;
+      div.style.color = '#fff';
+      div.style.fontWeight = '700';
+      div.style.display = 'flex';
+      div.style.alignItems = 'center';
+      div.style.justifyContent = 'center';
     } else {
       div.className = 'cake-piece';
       div.style.width = '60px';
       div.style.height = '60px';
       div.style.background = '#ff6666';
+      div.style.color = '#fff';
+      div.style.fontWeight = '700';
       div.innerText = usia;
+      div.style.display = 'flex';
+      div.style.alignItems = 'center';
+      div.style.justifyContent = 'center';
     }
-    div.style.left = (Math.random()*92) + '%';
-    div.style.animationDuration = (3 + Math.random()*3) + 's';
-    div.style.top = (-20 - Math.random()*80) + 'px';
-    document.body.appendChild(div);
-    setTimeout(()=>div.remove(),8000);
+
+    // random horizontal start position but ensure inside viewport
+    const leftPct = Math.random() * 100;
+    div.style.left = leftPct + '%';
+
+    // random animation duration & delay
+    const dur = (3 + Math.random()*3); // seconds
+    const delay = Math.random() * 0.6;   // stagger start a bit
+    div.style.animationDuration = dur + 's';
+    div.style.animationDelay = delay + 's';
+
+    // small horizontal sway using CSS variable (optional)
+    const sway = (Math.random()*60 - 30); // -30px .. 30px
+    div.style.setProperty('--sway', sway + 'px');
+
+    // append to fragment
+    frag.appendChild(div);
+
+    // schedule removal slightly after animation end
+    const totalMs = Math.ceil((dur + delay) * 1000) + 500;
+    setTimeout(()=> {
+      if(div && div.parentNode) div.parentNode.removeChild(div);
+    }, totalMs);
   }
+
+  particleLayer.appendChild(frag);
 }
 
 /* ========== Modal iframe (private form) ========== */
