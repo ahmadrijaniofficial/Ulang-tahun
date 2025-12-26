@@ -26,13 +26,15 @@ body{
   background:rgba(0,0,0,0.75); z-index:3000; padding:20px;
 }
 #particleWarning .box{
-  background:#0b1220; color:#fff; padding:18px; border-radius:10px; max-width:460px; width:100%;
+  background:#0b1220; color:#fff; padding:18px; border-radius:10px; max-width:520px; width:100%;
   box-shadow:0 12px 36px rgba(0,0,0,0.6); text-align:left;
 }
 #particleWarning h3{margin:0 0 8px 0}
 #particleWarning p{margin:0 0 12px 0; opacity:0.95}
 #particleWarning .actions{display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:12px}
 #particleWarning label{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+#particleWarning .field{display:flex;gap:8px;align-items:center;margin-top:8px}
+#particleWarning input[type="number"]{width:80px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#fff}
 
 /* overlay kunci / notifikasi */
 #overlay {
@@ -166,7 +168,6 @@ button:hover{background:#42a5f5}
 #miniPlayer input[type="range"]{ width:160px }
 #miniPlayer .time{ font-size:12px; opacity:0.95; }
 
-/* creator/text & channel card */
 .creatorFooter{ margin-top:14px; font-size:13px; color:#fff; opacity:0.95; }
 .channelCard{ margin-top:12px; display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.04); padding:10px 12px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.35); }
 .channelCard img{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.12); }
@@ -177,7 +178,6 @@ button:hover{background:#42a5f5}
 .btnExternal{ background:linear-gradient(90deg,#6b9cff,#4a86ff); }
 .btnLink:hover{ opacity:0.95; transform:translateY(-2px); }
 
-/* small notice shown if autoplay blocked */
 #autoplayNotice{
   position:fixed; left:12px; bottom:12px; z-index:2600;
   background:rgba(0,0,0,0.6); color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; display:none;
@@ -214,7 +214,18 @@ button:hover{background:#42a5f5}
         <button id="continueBtn">Lanjutkan</button>
       </div>
     </div>
-    <p style="margin-top:10px;font-size:13px;opacity:0.85">Batas partikel standar: <strong>50</strong></p>
+
+    <div class="field" style="margin-top:10px;align-items:center;justify-content:flex-start">
+      <label style="min-width:120px">Jumlah partikel:</label>
+      <input id="particleCountInput" type="number" min="0" max="200" step="1" />
+      <span style="opacity:0.85;font-size:13px;margin-left:6px"> (standar: 50)</span>
+    </div>
+
+    <div class="field" style="margin-top:8px">
+      <label><input type="checkbox" id="experimentToggle"> Mode eksperimen (ijinkan >50)</label>
+    </div>
+
+    <p style="margin-top:10px;font-size:13px;opacity:0.85"></p>
   </div>
 </div>
 
@@ -302,9 +313,11 @@ const PRIVATE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdvwI4dGvMJkS
 /* window length in ms: 7 days */
 const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
-/* particle limits */
-const MAX_PARTICLES = 50;        // batas yang diminta
-const FORCED_PARTICLES = 90;     // jumlah saat di-trigger rahasia
+/* particle defaults */
+const DEFAULT_MAX_PARTICLES = 50;        // default shown in UI
+const MAX_PARTICLES = 50;                // normal cap
+const FORCED_PARTICLES = 90;             // secret forced
+const ABSOLUTE_CAP = 200;                // absolute maximum allowed in experiment mode
 
 /* ================================== */
 
@@ -341,10 +354,16 @@ const particleLayer = document.getElementById('particleLayer');
 const particleWarning = document.getElementById('particleWarning');
 const disableParticlesCheckbox = document.getElementById('disableParticlesCheckbox');
 const continueBtn = document.getElementById('continueBtn');
+const particleCountInput = document.getElementById('particleCountInput');
+const experimentToggle = document.getElementById('experimentToggle');
 
 let unlocked = false;
 let keyBuffer = "";
 let particlesDisabled = false;
+
+/* user-controlled particle count (read/write to localStorage) */
+let userParticleCount = DEFAULT_MAX_PARTICLES;
+let userExperimentMode = false;
 
 /* for managing object URLs when user loads local file */
 let currentObjectURL = null;
@@ -402,26 +421,61 @@ function isInOpenWindow(lahir){
 function loadParticlePref(){
   const val = localStorage.getItem('particlesDisabled');
   particlesDisabled = (val === 'true');
-  // reflect checkbox if modal shown later
   disableParticlesCheckbox.checked = particlesDisabled;
+
+  const cnt = parseInt(localStorage.getItem('particleCount'), 10);
+  if(Number.isFinite(cnt) && !isNaN(cnt)){
+    userParticleCount = Math.max(0, Math.min(ABSOLUTE_CAP, cnt));
+  } else {
+    userParticleCount = DEFAULT_MAX_PARTICLES;
+  }
+  particleCountInput.value = userParticleCount;
+
+  const exp = localStorage.getItem('particleExperiment');
+  userExperimentMode = (exp === 'true');
+  experimentToggle.checked = userExperimentMode;
 }
 function saveParticlePref(){
   localStorage.setItem('particlesDisabled', particlesDisabled ? 'true' : 'false');
+  localStorage.setItem('particleCount', String(userParticleCount));
+  localStorage.setItem('particleExperiment', userExperimentMode ? 'true' : 'false');
+}
+
+/* Clear particles currently on screen (used when turning off) */
+function clearParticlesNow(){
+  // remove all children
+  while(particleLayer.firstChild){
+    particleLayer.removeChild(particleLayer.firstChild);
+  }
 }
 
 /* ========== STARTUP: show particle warning first ========== */
 (function showStartWarning(){
   loadParticlePref();
-  // set checkbox state
-  disableParticlesCheckbox.checked = particlesDisabled;
   particleWarning.style.display = 'flex';
   // when user continues, hide modal and start main init
   continueBtn.addEventListener('click', () => {
+    // read inputs and store
     particlesDisabled = disableParticlesCheckbox.checked;
+    const parsed = parseInt(particleCountInput.value, 10);
+    if(Number.isFinite(parsed) && !isNaN(parsed)){
+      userParticleCount = Math.max(0, Math.min(ABSOLUTE_CAP, parsed));
+    } else {
+      userParticleCount = DEFAULT_MAX_PARTICLES;
+    }
+    userExperimentMode = experimentToggle.checked;
+
+    // If user chose to disable particles, immediately clear any existing particles and persist
+    if(particlesDisabled) clearParticlesNow();
+
     saveParticlePref();
     particleWarning.style.display = 'none';
     startInit(); // proceed with original init logic
   });
+
+  // reflect current values into modal (in case it's shown by subsequent code)
+  particleCountInput.value = userParticleCount;
+  experimentToggle.checked = userExperimentMode;
 })();
 
 /* ========== ORIGINAL INIT LOGIC (moved into startInit) ========== */
@@ -478,6 +532,26 @@ function startInit(){
     updateCountdownToStart();
     setInterval(updateCountdownToStart, 1000);
   }
+
+  // Visibility / page events to pause music when user leaves or switches tab/app
+  function handlePauseOnHide(){
+    // pause audio when page becomes hidden or user leaves
+    if(!musicAudio.paused){
+      musicAudio.pause();
+      miniPlay.textContent = '▶';
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden){
+      handlePauseOnHide();
+    }
+  });
+  window.addEventListener('pagehide', () => { handlePauseOnHide(); });
+  // fallback: blur event (desktop switching)
+  window.addEventListener('blur', () => {
+    // only pause if document no longer visible
+    if(document.hidden) handlePauseOnHide();
+  });
 }
 
 /* Update countdown until start */
@@ -680,7 +754,7 @@ function startCountdown(){
  * showHujanBalonKado(usia, { force: false })
  * - jika force === true: munculkan FORCED_PARTICLES meskipun user mematikan partikel
  * - jika force === false: jika user mematikan partikel maka tidak memunculkan apa-apa
- * - selalu gunakan DocumentFragment dan transform-based animation
+ * - respect user settings (count + experiment)
  */
 function showHujanBalonKado(usia, opts = { force: false }){
   const force = opts.force === true;
@@ -690,10 +764,28 @@ function showHujanBalonKado(usia, opts = { force: false }){
 
   // decide how many to spawn
   const isTouch = isTouchDevice();
-  const baseCount = force ? FORCED_PARTICLES : (isTouch ? 35 : MAX_PARTICLES);
-  // ensure not greater than MAX_PARTICLES when not forced
-  const spawnCount = force ? FORCED_PARTICLES : Math.min(baseCount, MAX_PARTICLES);
 
+  // determine target count based on user settings and caps
+  let targetCount = userParticleCount || DEFAULT_MAX_PARTICLES;
+
+  if(force){
+    // if forced (secret), use FORCED_PARTICLES but allow experiment mode to increase up to ABSOLUTE_CAP
+    targetCount = userExperimentMode ? Math.min(ABSOLUTE_CAP, Math.max(FORCED_PARTICLES, targetCount)) : FORCED_PARTICLES;
+  } else {
+    if(userExperimentMode){
+      targetCount = Math.min(ABSOLUTE_CAP, Math.max(0, targetCount));
+    } else {
+      // not experiment mode, cap at normal MAX_PARTICLES
+      targetCount = Math.min(MAX_PARTICLES, Math.max(0, targetCount));
+    }
+  }
+
+  // fallback sensible default
+  if(!Number.isFinite(targetCount) || isNaN(targetCount) || targetCount <= 0) return;
+
+  const spawnCount = Math.round(targetCount);
+
+  // performance: use DocumentFragment and avoid heavy paints
   const frag = document.createDocumentFragment();
   const viewportW = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
 
