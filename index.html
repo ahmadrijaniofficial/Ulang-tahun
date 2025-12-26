@@ -4,6 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>AHMAD RIJANI</title>
+<!-- Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
 <style>
 html,body{height:100%;margin:0}
 body{
@@ -31,6 +33,7 @@ body{
   gap:14px;
   padding:20px;
   text-align:center;
+  -webkit-tap-highlight-color: transparent;
 }
 #overlay .box{
   background:rgba(255,255,255,0.04);
@@ -135,20 +138,46 @@ button:hover{background:#42a5f5}
 #miniPlayer input[type="range"]{ width:160px }
 #miniPlayer .time{ font-size:12px; opacity:0.95; }
 
-/* creator text placed inside last page */
+/* creator/text & channel card */
 .creatorFooter{ margin-top:14px; font-size:13px; color:#fff; opacity:0.95; }
+.channelCard{ margin-top:12px; display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.04); padding:10px 12px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.35); }
+.channelCard img{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.12); }
+.linkButtons{ display:flex; gap:8px; flex-wrap:wrap; }
+.btnLink{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; font-weight:700; text-decoration:none; color:#fff; }
+.btnLink .fa-fw{ width:16px; text-align:center }
+.btnYoutube{ background:linear-gradient(90deg,#ff4b4b,#c4302b); }
+.btnExternal{ background:linear-gradient(90deg,#6b9cff,#4a86ff); }
+.btnLink:hover{ opacity:0.95; transform:translateY(-2px); }
 
 /* small notice shown if autoplay blocked */
 #autoplayNotice{
   position:fixed; left:12px; bottom:12px; z-index:2600;
   background:rgba(0,0,0,0.6); color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; display:none;
 }
+
+/* MOBILE ADJUSTMENTS */
+@media (max-width:768px){
+  .book-3d-container{ width:96%; height:85%; }
+  #miniPlayer{
+    left:12px;
+    right:12px;
+    bottom:12px;
+    top:auto;
+    width: calc(100% - 24px);
+    justify-content:space-between;
+    padding:10px;
+  }
+  #miniPlayer input[type="range"]{ width:120px; }
+  #overlay .box{ min-width:260px; padding:14px; }
+  .page img{ width:120px; height:120px; }
+  .channelCard{ flex-direction:row; }
+}
 </style>
 </head>
 <body>
 
 <!-- Overlay kunci -->
-<div id="overlay">
+<div id="overlay" role="dialog" aria-modal="true">
   <div class="box">
     <h2 id="overlayTitle">Halaman Terkunci</h2>
     <p id="cdText">Menunggu...</p>
@@ -202,9 +231,9 @@ button:hover{background:#42a5f5}
 </div>
 
 <!-- mini player (persisten) -->
-<div id="miniPlayer">
+<div id="miniPlayer" aria-hidden="true">
   <button id="miniPlay">▶</button>
-  <input id="progress" type="range" min="0" max="100" value="0">
+  <input id="progress" type="range" min="0" max="100" value="0" aria-label="Progress">
   <div class="time" id="timeLabel">00:00 / 00:00</div>
   <input id="miniVol" type="range" min="0" max="1" step="0.01" value="1" title="Volume" style="width:80px">
 </div>
@@ -265,7 +294,14 @@ let keyBuffer = "";
 let currentObjectURL = null;
 const defaultMusicSrc = '1.mp3';
 
+/* mobile secret tap unlocking */
+let mobileTapCount = 0;
+const MOBILE_TAP_REQUIRED = 20;
+
 /* utilities */
+function isTouchDevice(){
+  return (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
+}
 function hitungUsia(lahir){
   const today=new Date();
   const birth=new Date(lahir);
@@ -313,29 +349,45 @@ function isInOpenWindow(lahir){
     musicAudio.src = defaultMusicSrc;
   }
   musicAudio.loop = true;
-  // If currently in the open window, open ; else show overlay with cooldown until start
+
+  // overlay mobile-tap handler: hanya aktif saat overlay tampil (kondisi terkunci)
+  overlay.addEventListener('click', (e) => {
+    // hanya pada perangkat sentuh
+    if(!isTouchDevice()) return;
+    // hanya saat masih terkunci
+    if(unlocked) return;
+    // increment tap count (anggap klik di mana saja pada overlay)
+    mobileTapCount++;
+    if(mobileTapCount >= MOBILE_TAP_REQUIRED){
+      unlocked = true;
+      overlay.style.display = 'none';
+      openFlipbook();
+      mobileTapCount = 0;
+    }
+    // jangan mencegah fungsi default — ini rahasia, jadi tidak ada feedback visual
+  });
+
+  // If currently in the open window, open ; else show overlay with countdown until start
   if(isInOpenWindow(ulangTahun.lahir)){
     unlocked = true;
     overlay.style.display = 'none';
     openFlipbook();
     return;
   }
-  // if after window end (i.e., now >= endWindow) show message that period ended and show cooldown to next start
+  // if after window end show message that period ended and show cooldown to next start
   const start = nextBirthdayStart(ulangTahun.lahir);
   const end = new Date(start.getTime() + WINDOW_MS);
   const now = new Date();
   if(now >= end){
     overlayTitle.textContent = 'Periode terbuka telah berakhir';
-    const untilNext = nextBirthdayStart(ulangTahun.lahir); // this gives next year's start
+    const untilNext = nextBirthdayStart(ulangTahun.lahir);
     const cd = getCooldownObj(untilNext);
     cdText.textContent = `Periode yang dimaksud sudah berakhir pada ${end.toLocaleString()}. Situs terkunci kembali. Tunggu ${cd.days} hari ${cd.hours} jam ${cd.minutes} menit ${cd.seconds} detik sampai periode berikutnya.`;
     periodNote.style.display = 'block';
     periodNote.textContent = `Periode terbuka sebelumnya: ${start.toLocaleDateString()} — ${new Date(end.getTime()).toLocaleDateString()}`;
     overlay.style.display = 'flex';
     bookWrap.style.display = 'none';
-    // still allow shortcut to open (per aturan sebelumnya)
   } else {
-    // normal locked before start
     overlayTitle.textContent = 'Halaman Terkunci';
     overlay.style.display = 'flex';
     bookWrap.style.display = 'none';
@@ -358,7 +410,7 @@ function updateCountdownToStart(){
   cdText.textContent = `Tunggu ${cd.days} hari ${cd.hours} jam ${cd.minutes} menit ${cd.seconds} detik lagi`;
 }
 
-/* keyboard shortcut */
+/* keyboard shortcut (numeric sequence) */
 window.addEventListener('keydown', (e) => {
   const k = e.key;
   if(!/^[0-9]$/.test(k)) return;
@@ -376,16 +428,13 @@ window.addEventListener('keydown', (e) => {
 async function attemptAutoplay(){
   try {
     await musicAudio.play();
-    // autoplay succeeded
     showMiniPlayer();
     miniPlay.textContent = '❚❚';
     autoplayNotice.style.display = 'none';
   } catch(err){
-    // autoplay blocked
     showMiniPlayer();
     miniPlay.textContent = '▶';
     autoplayNotice.style.display = 'block';
-    // hide notice after a bit so it doesn't annoy too long
     setTimeout(()=>{ autoplayNotice.style.display = 'none'; }, 8000);
   }
 }
@@ -429,7 +478,7 @@ function createPage(title, text, foto, restart=false){
 
     const btnNext = document.createElement('button');
     btnNext.className = 'nav-btn';
-    btnNext.innerText = 'Next';
+    btnNext.innerText = 'Selanjutnya'; // <- perubahan: Next -> Selanjutnya
     btnNext.onclick = nextPage;
     page.appendChild(btnNext);
   }
@@ -457,11 +506,31 @@ function generatePages(){
     privateBtn.onclick = openPrivateModal;
     lastPage.appendChild(privateBtn);
 
-    // Tambahkan teks pencipta di halaman terakhir saja
-    const creator = document.createElement('div');
-    creator.className = 'creatorFooter';
-    creator.innerText = 'Pencipta web AHMAD RIJANI (26/12/2025)';
-    lastPage.appendChild(creator);
+    // Tambahkan teks pencipta dan link channel di halaman terakhir saja (diperbagus)
+    const creatorWrap = document.createElement('div');
+    creatorWrap.className = 'creatorFooter';
+    creatorWrap.innerHTML = `<div style="font-weight:700;margin-bottom:6px">Pencipta web</div>`;
+
+    const card = document.createElement('div');
+    card.className = 'channelCard';
+    card.innerHTML = `
+      <img src="https://i.pinimg.com/736x/34/e4/e7/34e4e751e0dfbb4e3e222e33634d8cab.jpg" alt="avatar">
+      <div style="display:flex;flex-direction:column;align-items:flex-start">
+        <div style="font-weight:800">AHMAD RIJANI</div>
+        <div style="font-size:13px;opacity:0.9;margin-top:6px" class="linkButtons">
+          <a class="btnLink btnYoutube" href="https://youtube.com/@ahmadrijaniofficial?si=vtbOtMIk1yOrbt8Z" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-youtube fa-fw"></i>
+            Channel YouTube
+          </a>
+          <a class="btnLink btnExternal" href="https://ahmadrijani.github.io/ahmadrijaniofficial/Semua.link/link.html" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-link fa-fw"></i>
+            Semua.link
+          </a>
+        </div>
+      </div>`;
+
+    creatorWrap.appendChild(card);
+    lastPage.appendChild(creatorWrap);
   }
 
   showPage(0);
@@ -610,14 +679,12 @@ modalVolume.addEventListener('input', (e)=> {
 fileMusic.addEventListener('change', async (e) => {
   const f = e.target.files && e.target.files[0];
   if(!f) return;
-  // revoke previous object url if any
   if(currentObjectURL){
     URL.revokeObjectURL(currentObjectURL);
     currentObjectURL = null;
   }
   currentObjectURL = URL.createObjectURL(f);
   musicAudio.src = currentObjectURL;
-  // attempt autoplay after setting file
   try {
     await musicAudio.play();
     miniPlay.textContent = '❚❚';
@@ -632,14 +699,12 @@ fileMusic.addEventListener('change', async (e) => {
 
 /* restore default music */
 restoreBtn.addEventListener('click', async () => {
-  // revoke current object url if used
   if(currentObjectURL){
     URL.revokeObjectURL(currentObjectURL);
     currentObjectURL = null;
   }
   musicAudio.src = defaultMusicSrc;
   musicAudio.currentTime = 0;
-  // attempt autoplay on restore
   try {
     await musicAudio.play();
     miniPlay.textContent = '❚❚';
@@ -651,7 +716,6 @@ restoreBtn.addEventListener('click', async () => {
     autoplayNotice.style.display = 'block';
     setTimeout(()=>{ autoplayNotice.style.display = 'none'; }, 6000);
   }
-  // clear file input so same file can be reselected later
   fileMusic.value = '';
 });
 
@@ -659,9 +723,11 @@ restoreBtn.addEventListener('click', async () => {
 function showMiniPlayer(){
   miniPlayer.style.display = 'flex';
   miniVol.value = musicAudio.volume;
+  miniPlayer.setAttribute('aria-hidden','false');
 }
 function hideMiniPlayer(){
   miniPlayer.style.display = 'none';
+  miniPlayer.setAttribute('aria-hidden','true');
 }
 
 /* mini-play toggle */
