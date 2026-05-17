@@ -1,1 +1,579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 
+<title>SELAMAT ULANG TAHUN</title>
+
+<!-- SEO -->
+<meta name="description" content="selamat ulang tahun" />
+
+<!-- Open Graph (WhatsApp, Discord, dll) -->
+<meta property="og:title" content="SELAMAT ULANG TAHUN" />
+<meta property="og:description" content="selamat ulang tahun" />
+
+<meta property="og:image" content="https://ahmadrijaniofficial.github.io/Ulang-tahun/OTH/image1.webp" />
+
+<meta property="og:url" content="https://ahmadrijaniofficial.github.io/Ulang-tahun/OTH/ulangTahun.html" />
+<meta property="og:type" content="website" />
+
+<!-- Optional biar lebih aesthetic di mobile -->
+<meta name="theme-color" content="#ffb6d5">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+
+<style>
+html,body{height:100%;margin:0}
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:
+    linear-gradient(rgba(255, 214, 230, 0.84), rgba(255, 214, 230, 0.84)),
+    url('https://i.pinimg.com/736x/0a/3d/1c/0a3d1c39edddb24ca9b1959f4c9fa058.jpg');
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  overflow:hidden;
+  color:#fff;
+}
+
+.book-3d-container {
+  width:90%;
+  max-width:820px;
+  height:80%;
+  perspective:2000px;
+  position:relative;
+  z-index:1;
+}
+.book-3d {
+  width:100%;
+  height:100%;
+  position:relative;
+  transform-style: preserve-3d;
+  transition: transform 1s;
+}
+.page {
+  width:100%;
+  height:100%;
+  position:absolute;
+  top:0; left:0;
+  background:rgba(255,255,255,0.14);
+  border-radius:12px;
+  backdrop-filter:blur(8px);
+  box-shadow:0 8px 30px rgba(0,0,0,0.28);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:20px;
+  transform-origin:left center;
+  transition: transform 1s ease, z-index 0s;
+}
+.page img{
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  object-fit:cover;
+  margin-bottom:12px;
+  border:3px solid #fff;
+}
+h1,h2,p{margin:6px 0;color:#fff;text-shadow:1px 1px 2px #000}
+
+button{
+  margin:8px;
+  padding:10px 16px;
+  border-radius:50px;
+  border:none;
+  background:#f7b7d2;
+  color:#6b2140;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 8px 18px rgba(0,0,0,0.12);
+}
+button:hover{
+  background:#f4a9c7;
+}
+
+.countdown{font-size:1.05rem;margin:8px 0;font-weight:700}
+.small{font-size:0.9rem;opacity:0.9}
+
+#particleLayer{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:5;
+}
+
+.balon-piece, .kado-piece, .cake-piece{
+  position:absolute;
+  opacity:0.95;
+  top:0;
+  transform-origin:center center;
+  animation:fall linear forwards;
+}
+.balon-piece{border-radius:50%}
+.kado-piece{
+  transform:rotate(45deg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:700;
+}
+.cake-piece{
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:700;
+}
+
+@keyframes fall{
+  from { transform: translate3d(0,-120px,0) rotate(0deg); opacity:1; }
+  to   { transform: translate3d(0,110vh,0) rotate(360deg); opacity:0.95; }
+}
+
+#miniPlayer {
+  position:fixed;
+  right:12px;
+  top:12px;
+  z-index:2500;
+  background:rgba(0,0,0,0.45);
+  padding:8px 10px;
+  border-radius:10px;
+  display:none;
+  align-items:center;
+  gap:8px;
+  backdrop-filter: blur(8px);
+}
+#miniPlayer button{
+  padding:6px 10px;
+  border-radius:8px;
+  font-weight:700;
+  background:#f7b7d2;
+  border:none;
+  color:#6b2140;
+  cursor:pointer;
+}
+#miniPlayer input[type="range"]{ width:160px }
+#miniPlayer .time{ font-size:12px; opacity:0.95; color:#fff; }
+
+.creatorFooter{
+  margin-top:14px;
+  font-size:13px;
+  color:#fff;
+  opacity:0.95;
+}
+.channelCard{
+  margin-top:12px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:rgba(255,255,255,0.08);
+  padding:10px 12px;
+  border-radius:10px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.25);
+}
+.channelCard img{
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid rgba(255,255,255,0.12);
+}
+.linkButtons{ display:flex; gap:8px; flex-wrap:wrap; }
+.btnLink{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:8px;
+  font-weight:700;
+  text-decoration:none;
+  color:#fff;
+}
+.btnLink .fa-fw{ width:16px; text-align:center }
+.btnYoutube{ background:linear-gradient(90deg,#ff4b4b,#c4302b); }
+.btnExternal{ background:linear-gradient(90deg,#f7b7d2,#ef8fb6); color:#6b2140; }
+.btnLink:hover{ opacity:0.95; transform:translateY(-2px); }
+
+#autoplayNotice{
+  position:fixed;
+  left:12px;
+  bottom:12px;
+  z-index:2600;
+  background:rgba(0,0,0,0.55);
+  color:#fff;
+  padding:8px 12px;
+  border-radius:8px;
+  font-size:13px;
+  display:none;
+}
+
+@media (max-width:768px){
+  .book-3d-container{ width:96%; height:85%; }
+  #miniPlayer{
+    left:12px;
+    right:12px;
+    bottom:12px;
+    top:auto;
+    width: calc(100% - 24px);
+    justify-content:space-between;
+    padding:10px;
+  }
+  #miniPlayer input[type="range"]{ width:120px; }
+  .page img{ width:120px; height:120px; }
+  .channelCard{ flex-direction:row; }
+}
+</style>
+</head>
+<body>
+
+<div id="particleLayer" aria-hidden="true"></div>
+
+<div class="book-3d-container" id="bookWrap">
+  <div class="book-3d" id="book3D"></div>
+</div>
+
+<div id="miniPlayer" aria-hidden="true">
+  <button id="miniPlay">▶</button>
+  <input id="progress" type="range" min="0" max="100" value="0" aria-label="Progress">
+  <div class="time" id="timeLabel">00:00 / 00:00</div>
+  <input id="miniVol" type="range" min="0" max="1" step="0.01" value="1" title="Volume" style="width:80px">
+</div>
+
+<div id="autoplayNotice">Autoplay diblokir oleh browser — tekan ▶ untuk memutar.</div>
+
+<audio id="musicAudio" preload="auto" loop>
+  <source src="https://cs1.mp3.pm/download/78342348/RldKYnVYTVVoZE0yWEduRW0vNllVMU5nQ3BFVkMxSmZ6UHZ0M1lLb0ZKeW5DMVFmS3R0S0FkMG12ajA2UGhaS3R6N1h1U0VyYUY5QlRzckI4TktKek00cG9BZk1nbHhubVNqd1U1Qit6NE5JM0swZS9uWFFvVHhveGRsdmthbks/Jamrud_-_Selamat_Ulang_Tahun_(mp3.pm).mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const ulangTahun = {
+  nama: "AMINAH",
+  lahir: "1982-05-25",
+  foto: "https://ahmadrijaniofficial.github.io/Ulang-tahun/OTH/image1.webp",
+  pesan: "Selamat Ulang Tahun. Semoga panjang umur, sehat selalu, rezekinya lancar, makin bahagia, makin sukses, dan semua harapan baik selalu menyertai. Selamat bertambah usia, semoga hari-harimu penuh senyum, cinta, kedamaian, dan banyak momen indah. Selamat ulang tahun yang istimewa."
+};
+
+const SHORTCUT_SEQ = "1234567890";
+const DEFAULT_MAX_PARTICLES = 50;
+const MAX_PARTICLES = 50;
+const FORCED_PARTICLES = 90;
+const ABSOLUTE_CAP = 200;
+
+const bookWrap = document.getElementById('bookWrap');
+const particleLayer = document.getElementById('particleLayer');
+const musicAudio = document.getElementById('musicAudio');
+const autoplayNotice = document.getElementById('autoplayNotice');
+
+const playBtn = document.getElementById('miniPlay');
+const progress = document.getElementById('progress');
+const timeLabel = document.getElementById('timeLabel');
+const miniVol = document.getElementById('miniVol');
+
+let pages = [];
+let currentPage = 0;
+let keyBuffer = "";
+
+let particlesDisabled = false;
+let userParticleCount = DEFAULT_MAX_PARTICLES;
+let userExperimentMode = false;
+
+function hitungUsia(lahir){
+  const today = new Date();
+  const birth = new Date(lahir);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if(m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function formatTanggal(lahir){
+  const d = new Date(lahir);
+  return d.getDate() + '-' + (d.getMonth() + 1) + '-' + d.getFullYear();
+}
+
+function showMiniPlayer(){
+  document.getElementById('miniPlayer').style.display = 'flex';
+}
+
+function formatTime(sec){
+  if(!isFinite(sec)) return '00:00';
+  const s = Math.floor(sec % 60);
+  const m = Math.floor((sec / 60) % 60);
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+async function attemptAutoplay(){
+  try{
+    if (musicAudio.readyState >= 1) {
+      try { musicAudio.currentTime = 10; } catch(e) {}
+    }
+    await musicAudio.play();
+    showMiniPlayer();
+    playBtn.textContent = '❚❚';
+    autoplayNotice.style.display = 'none';
+  }catch(err){
+    showMiniPlayer();
+    playBtn.textContent = '▶';
+    autoplayNotice.style.display = 'block';
+    setTimeout(()=>autoplayNotice.style.display='none', 8000);
+  }
+}
+
+function createPage(title, text, foto, restart=false){
+  const page = document.createElement('div');
+  page.className = 'page';
+  page.innerHTML = `<h2>${title}</h2><p style="white-space:pre-line">${text}</p>`;
+
+  if(foto){
+    const img = document.createElement('img');
+    img.src = foto;
+    img.alt = 'Foto';
+    img.onerror = function(){ this.src = 'https://via.placeholder.com/140?text=Foto'; };
+    page.insertBefore(img, page.firstChild);
+  }
+
+  if(restart){
+    const btn = document.createElement('button');
+    btn.innerText = 'Ulangi';
+    btn.onclick = () => {
+      pages.forEach(p => p.style.transform = 'rotateY(-180deg)');
+      setTimeout(()=>showPage(0), 800);
+      try {
+        musicAudio.currentTime = 10;
+        musicAudio.play().catch(()=>{});
+        playBtn.textContent = '❚❚';
+      } catch(e) {}
+    };
+    page.appendChild(btn);
+  }else{
+    const btnPlayOpen = document.createElement('button');
+    btnPlayOpen.innerText = 'Nyalakan Musik';
+    btnPlayOpen.onclick = () => {
+      try {
+        if (musicAudio.readyState >= 1) {
+          musicAudio.currentTime = 10;
+        }
+      } catch(e) {}
+      musicAudio.play().catch(()=>{});
+      showMiniPlayer();
+      playBtn.textContent = '❚❚';
+    };
+    page.appendChild(btnPlayOpen);
+
+    const btnNext = document.createElement('button');
+    btnNext.innerText = 'Selanjutnya';
+    btnNext.onclick = nextPage;
+    page.appendChild(btnNext);
+  }
+
+  return page;
+}
+
+function generatePages(){
+  const book = document.getElementById('book3D');
+  book.innerHTML = '';
+
+  const usia = hitungUsia(ulangTahun.lahir);
+  const tanggalLahir = formatTanggal(ulangTahun.lahir);
+
+  const slides = [
+    createPage(
+      "Ulang Tahun " + ulangTahun.nama,
+      `${ulangTahun.pesan}\n\nUsia: ${usia} tahun\nSemoga panjang umur, sehat selalu, bahagia selalu, dan semua hari ke depan terasa lebih indah.\nSelamat ulang tahun!`,
+      ulangTahun.foto
+    ),
+    createPage(
+      "Tanggal Lahir",
+      `Tanggal Lahir: ${tanggalLahir}\n\nSelamat ulang tahun lagi.\nSemoga hidupnya dipenuhi semangat, kabar baik, keberuntungan, dan banyak alasan untuk tersenyum.`,
+      ulangTahun.foto
+    ),
+    createPage(
+      "Selamat Ulang Tahun",
+      `Selamat ulang tahun.\nSemoga selalu diberi kesehatan, kebahagiaan, ketenangan, dan langkah yang lancar.\nSemoga semua yang diimpikan jadi kenyataan.\nSemoga hari ini jadi awal yang bagus untuk tahun yang lebih indah.\n\nSelamat ulang tahun yang sangat spesial.`,
+      null,
+      true
+    )
+  ];
+
+  slides.forEach(s => book.appendChild(s));
+  pages = document.querySelectorAll('.page');
+
+  const lastPage = pages[pages.length - 1];
+  if(lastPage){
+    const creatorWrap = document.createElement('div');
+    creatorWrap.className = 'creatorFooter';
+
+    const card = document.createElement('div');
+    card.className = 'channelCard';
+    card.innerHTML = `
+      <img src="https://i.pinimg.com/736x/34/e4/e7/34e4e751e0dfbb4e3e222e33634d8cab.jpg" alt="avatar">
+      <div style="display:flex;flex-direction:column;align-items:flex-start">
+        <div style="font-weight:800">AHMAD RIJANI</div>
+        <div style="font-size:13px;opacity:0.9;margin-top:6px" class="linkButtons">
+          <a class="btnLink btnYoutube" href="https://youtube.com/@ahmadrijaniofficial?si=vtbOtMIk1yOrbt8Z" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-youtube fa-fw"></i>
+            Channel YouTube
+          </a>
+          <a class="btnLink btnExternal" href="https://ahmadrijani.github.io/ahmadrijaniofficial/Semua.link/link.html" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-link fa-fw"></i>
+            Semua.link
+          </a>
+        </div>
+      </div>`;
+    creatorWrap.appendChild(card);
+    lastPage.appendChild(creatorWrap);
+  }
+
+  showPage(0);
+}
+
+function showPage(index){
+  pages.forEach((p, i) => {
+    p.style.zIndex = 0;
+    p.style.transform = 'rotateY(0deg)';
+    if(i < index) p.style.transform = 'rotateY(-180deg)';
+    if(i === index) p.style.zIndex = 10;
+  });
+  currentPage = index;
+}
+
+function nextPage(){
+  if(currentPage < pages.length - 1){
+    pages[currentPage].style.transform = 'rotateY(-180deg)';
+    pages[currentPage].style.zIndex = 0;
+    currentPage++;
+    pages[currentPage].style.zIndex = 10;
+  }
+}
+
+function showHujanBalonKado(usia, opts = { force: false }){
+  const force = opts.force === true;
+  if(particlesDisabled && !force) return;
+
+  let targetCount = userParticleCount || DEFAULT_MAX_PARTICLES;
+
+  if(force){
+    targetCount = userExperimentMode ? Math.min(ABSOLUTE_CAP, Math.max(FORCED_PARTICLES, targetCount)) : FORCED_PARTICLES;
+  }else{
+    if(userExperimentMode){
+      targetCount = Math.min(ABSOLUTE_CAP, Math.max(0, targetCount));
+    }else{
+      targetCount = Math.min(MAX_PARTICLES, Math.max(0, targetCount));
+    }
+  }
+
+  if(!Number.isFinite(targetCount) || targetCount <= 0) return;
+
+  const frag = document.createDocumentFragment();
+
+  for(let i = 0; i < Math.round(targetCount); i++){
+    const div = document.createElement('div');
+    const r = Math.random();
+
+    if(r < 0.45){
+      div.className = 'balon-piece';
+      const size = 12 + Math.random() * 22;
+      div.style.width = size + 'px';
+      div.style.height = size + 'px';
+      div.style.background = `hsl(${Math.random() * 360},70%,60%)`;
+    }else if(r < 0.85){
+      div.className = 'kado-piece';
+      const size = 14 + Math.random() * 18;
+      div.style.width = size + 'px';
+      div.style.height = size + 'px';
+      div.style.background = `hsl(${Math.random() * 360},80%,55%)`;
+    }else{
+      div.className = 'cake-piece';
+      div.style.width = '60px';
+      div.style.height = '60px';
+      div.style.background = '#ff7da8';
+      div.innerText = usia;
+    }
+
+    div.style.left = (Math.random() * 100) + '%';
+    const dur = 3 + Math.random() * 3;
+    const delay = Math.random() * 0.6;
+    div.style.animationDuration = dur + 's';
+    div.style.animationDelay = delay + 's';
+    frag.appendChild(div);
+
+    const totalMs = Math.ceil((dur + delay) * 1000) + 500;
+    setTimeout(() => {
+      if(div && div.parentNode) div.parentNode.removeChild(div);
+    }, totalMs);
+  }
+
+  particleLayer.appendChild(frag);
+}
+
+musicAudio.addEventListener('loadedmetadata', () => {
+  try{
+    musicAudio.currentTime = 10;
+  }catch(e){}
+});
+
+playBtn.addEventListener('click', () => {
+  if(musicAudio.paused){
+    try {
+      if (musicAudio.readyState >= 1) {
+        musicAudio.currentTime = 10;
+      }
+    } catch(e) {}
+    musicAudio.play().catch(()=>{});
+    playBtn.textContent = '❚❚';
+  }else{
+    musicAudio.pause();
+    playBtn.textContent = '▶';
+  }
+});
+
+musicAudio.addEventListener('timeupdate', () => {
+  if(!isFinite(musicAudio.duration) || musicAudio.duration === 0) return;
+  progress.value = (musicAudio.currentTime / musicAudio.duration) * 100;
+  timeLabel.textContent = formatTime(musicAudio.currentTime) + ' / ' + formatTime(musicAudio.duration);
+});
+
+progress.addEventListener('input', (e) => {
+  if(!isFinite(musicAudio.duration) || musicAudio.duration === 0) return;
+  musicAudio.currentTime = (parseFloat(e.target.value) / 100) * musicAudio.duration;
+});
+
+miniVol.addEventListener('input', (e) => {
+  musicAudio.volume = parseFloat(e.target.value);
+});
+
+window.addEventListener('keydown', (e) => {
+  const k = e.key;
+  if(!/^[0-9]$/.test(k)) return;
+  keyBuffer += k;
+  if(keyBuffer.length > SHORTCUT_SEQ.length) keyBuffer = keyBuffer.slice(-SHORTCUT_SEQ.length);
+  if(keyBuffer === SHORTCUT_SEQ){
+    const usia = hitungUsia(ulangTahun.lahir);
+    showHujanBalonKado(usia, { force: true });
+    keyBuffer = "";
+  }
+});
+
+function startApp(){
+  musicAudio.loop = true;
+  generatePages();
+  attemptAutoplay();
+  const usia = hitungUsia(ulangTahun.lahir);
+  showHujanBalonKado(usia, { force: true });
+}
+
+startApp();
+</script>
+</body>
+</html>
